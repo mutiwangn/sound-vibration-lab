@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>声音与振动数字化探究工具 V2</title>
+  <style>
+    :root{
+      --bg:#0e1117;
+      --panel:#171b24;
+      --panel2:#202636;
+      --text:#f4f7fb;
+      --muted:#aeb8ca;
+      --line:rgba(255,255,255,.13);
+      --accent:#7dd3fc;
+      --good:#86efac;
+      --warn:#fde68a;
+      --danger:#fca5a5;
+      --radius:18px;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0c1017 0%,#131722 100%);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;
+      min-height:100dvh;
+    }
+    header{
+      position:sticky;top:0;z-index:20;
+      padding:12px 14px 10px;
+      background:rgba(14,17,23,.92);
+      backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);
+    }
+    h1{margin:0;font-size:18px;letter-spacing:.02em;font-weight:850}
+    .sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+    main{padding:12px;display:grid;gap:12px;max-width:1100px;margin:0 auto 40px}
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.035));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      overflow:hidden;
+      box-shadow:0 12px 36px rgba(0,0,0,.24);
+    }
+    .cameraBox{
+      position:relative;
+      min-height:52dvh;
+      background:#05070a;
+      display:grid;
+      place-items:center;
+      touch-action:none;
+    }
+    video{
+      width:100%;height:100%;max-height:68dvh;object-fit:cover;display:block;background:#000;
+    }
+    #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+    .topBadge{
+      position:absolute;top:10px;left:10px;right:10px;
+      display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      pointer-events:none;
+    }
+    .pill{
+      background:rgba(0,0,0,.56);border:1px solid rgba(255,255,255,.18);
+      border-radius:999px;padding:7px 10px;font-size:12px;color:#fff;
+      backdrop-filter:blur(6px);
+    }
+    .panel{padding:12px;border-top:1px solid var(--line);background:rgba(255,255,255,.035);display:grid;gap:10px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+    select,input[type="range"]{
+      width:100%;border:1px solid var(--line);background:#111827;color:var(--text);
+      border-radius:12px;padding:11px 10px;font-size:14px;font-weight:700;
+    }
+    input[type="range"]{padding:0;height:40px;accent-color:#7dd3fc}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    button{
+      appearance:none;border:0;border-radius:14px;padding:13px 10px;
+      font-size:15px;font-weight:850;color:#091018;background:#e5f6ff;
+      box-shadow:0 8px 18px rgba(0,0,0,.2);
+    }
+    button.secondary{background:#263044;color:#f4f7fb;border:1px solid var(--line);box-shadow:none}
+    button.warn{background:#fde68a;color:#281a00}
+    button.danger{background:#fecaca;color:#3b0808}
+    button:disabled{opacity:.45;filter:grayscale(.6)}
+    .status{font-size:13px;color:var(--muted);line-height:1.55;padding:0 14px 14px}
+    .meterWrap{padding:14px;display:grid;gap:12px}
+    .bigReadout{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .readout{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:104px}
+    .label2{font-size:12px;color:var(--muted);margin-bottom:4px}
+    .value{font-size:25px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+    .unit{font-size:12px;color:var(--muted);font-weight:650;margin-left:2px}
+    .small{font-size:12px;color:var(--muted);line-height:1.45;margin-top:5px}
+    .rainbowArea{
+      height:170px;background:#0b0e14;border:1px solid var(--line);border-radius:16px;
+      display:flex;align-items:flex-end;justify-content:center;gap:6px;padding:14px 16px;overflow:hidden;
+    }
+    .bar{
+      width:clamp(12px,4vw,28px);min-height:5px;border-radius:10px 10px 4px 4px;
+      background:linear-gradient(to top,#26d07c 0%,#f4e04d 35%,#ff9d42 58%,#ff426d 78%,#8b5cf6 100%);
+      box-shadow:0 0 18px rgba(255,255,255,.12);transition:height .055s linear;
+    }
+    .guide{padding:14px;display:grid;gap:9px;font-size:14px;line-height:1.56;color:#d8e1ef}
+    .guide b{color:#fff}.guide .note{color:var(--warn)}
+    .modeGuide{display:grid;gap:8px}
+    .modeCard{background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:14px;padding:10px}
+    .modeCard strong{display:block;margin-bottom:4px;color:#fff}
+    .records{padding:14px;display:grid;gap:10px}
+    .recordTitle{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    h2{font-size:16px;margin:0;font-weight:850}
+    .recordList{display:grid;gap:10px}
+    .rec{display:grid;grid-template-columns:96px 1fr;gap:10px;background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:15px;padding:9px}
+    .rec img{width:96px;height:70px;object-fit:cover;border-radius:10px;background:#000}
+    .recBody{font-size:13px;line-height:1.55;color:#d9e2ef}.recBody b{font-size:14px;color:#fff}
+    .empty{color:var(--muted);font-size:13px;border:1px dashed var(--line);border-radius:14px;padding:14px;text-align:center}
+    #plot{width:100%;height:220px;border-radius:14px;border:1px solid var(--line);background:#0b0e14}
+    .modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(0,0,0,.68);padding:18px}
+    .modalBox{max-width:560px;background:#171b24;border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+    .modalBox h3{font-size:20px;margin:0 0 10px}.modalBox p,.modalBox li{font-size:14px;line-height:1.65;color:#d7dfec}.modalBox ul{padding-left:20px;margin:8px 0 14px}
+    .hidden{display:none!important}
+    .quality{height:8px;border-radius:999px;background:#263044;overflow:hidden;margin-top:8px}
+    .quality>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#fca5a5,#fde68a,#86efac)}
+    @media (min-width:900px){main{grid-template-columns:1.25fr .75fr;align-items:start}.cameraBox{min-height:590px}.wide{grid-column:1/-1}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>声音与振动数字化探究工具 V2</h1>
+  <div class="sub">支持侧拍钢尺端点、鼓面边缘、音叉叉齿端部；摄像头记录可见振动指数，麦克风记录相对音量。</div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="cameraBox" id="cameraBox">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div class="topBadge">
+        <div class="pill" id="trackState">观察区：未检测</div>
+        <div class="pill" id="recordState">未记录</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="row">
+        <div>
+          <label for="modeSelect">观察对象</label>
+          <select id="modeSelect">
+            <option value="ruler">钢尺：侧拍自由端点</option>
+            <option value="drum">鼓面：侧拍鼓面边缘/纸片</option>
+            <option value="fork">音叉：侧拍叉齿端部</option>
+            <option value="marker">通用：红色标记点追踪</option>
+          </select>
+        </div>
+        <div>
+          <label for="axisSelect">主要振动方向</label>
+          <select id="axisSelect">
+            <option value="auto">自动判断</option>
+            <option value="y">上下振动</option>
+            <option value="x">左右振动</option>
+          </select>
+        </div>
+      </div>
+      <div class="row3">
+        <div>
+          <label for="roiSize">观察框大小</label>
+          <input id="roiSize" type="range" min="18" max="58" value="34" />
+        </div>
+        <button id="startBtn">开始检测</button>
+        <button id="calibrateBtn" class="secondary" disabled>校准静止位置</button>
+      </div>
+      <div class="controls">
+        <button id="recordBtn" class="warn" disabled>记录 3 秒</button>
+        <button id="exportBtn" class="secondary">导出 CSV</button>
+      </div>
+    </div>
+    <div class="status" id="status">使用方法：把钢尺端点、鼓面边缘或音叉叉齿端部放入中心观察框。可用手指拖动观察框，先校准静止位置，再开始实验。</div>
+  </section>
+
+  <section class="card">
+    <div class="meterWrap">
+      <div class="bigReadout">
+        <div class="readout">
+          <div class="label2">实时相对音量</div>
+          <div class="value"><span id="dbValue">--</span><span class="unit">dBFS</span></div>
+          <div class="small">非专业声级计分贝；适合同条件比较。</div>
+        </div>
+        <div class="readout">
+          <div class="label2">实时可见振动指数</div>
+          <div class="value"><span id="ampValue">--</span><span class="unit">相对值</span></div>
+          <div class="small" id="methodHint">来自观察区边缘位移、画面变化和运动模糊。</div>
+        </div>
+      </div>
+      <div class="rainbowArea" aria-label="彩虹色音量柱">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <div class="readout">
+        <div class="label2">画面追踪质量</div>
+        <div class="value"><span id="qualityValue">--</span><span class="unit">%</span></div>
+        <div class="quality"><i id="qualityBar"></i></div>
+        <div class="small">低于 35% 时，请换纯色背景、靠近拍摄、增加光照或调小观察框。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card wide">
+    <div class="guide">
+      <b>三种对象的拍摄要点</b>
+      <div class="modeGuide">
+        <div class="modeCard"><strong>钢尺</strong>让手机从侧面对准伸出桌边的自由端点，观察框只框住尺端和少量背景。算法主要记录端点的上下位移。</div>
+        <div class="modeCard"><strong>鼓面</strong>从侧面拍鼓面边缘或鼓面上轻纸片的尖端。若鼓面本身不明显，贴一小片彩纸或放轻纸粒，算法记录边缘线/纸片的位移与运动变化。</div>
+        <div class="modeCard"><strong>音叉</strong>从侧面对准一个叉齿端部，背景用白纸或黑纸。普通手机帧率难以逐帧看清音叉快速往复，工具记录的是叉齿端部的“运动模糊/边缘晃动指数”。</div>
+      </div>
+      <span class="note">教学口径：这里的“可见振动指数”不是专业位移单位，而是用于比较小力、中力、大力时的相对变化。</span>
+    </div>
+  </section>
+
+  <section class="card wide">
+    <div class="records">
+      <div class="recordTitle">
+        <h2>实验记录</h2>
+        <button id="clearBtn" class="danger" style="padding:9px 12px;font-size:13px">清空</button>
+      </div>
+      <canvas id="plot" width="900" height="360"></canvas>
+      <div id="recordList" class="recordList"><div class="empty">还没有记录。完成一次 3 秒记录后，会在这里生成数据卡片。</div></div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="introModal">
+  <div class="modalBox">
+    <h3>侧拍“端点/边缘”的声音与振动探究</h3>
+    <p>本版本不只依赖红色标记点。它会在观察框内追踪钢尺端点、鼓面边缘或音叉叉齿端部的边缘位移、画面变化和运动模糊，并同步显示相对音量柱。</p>
+    <ul>
+      <li>手机必须固定，不能手持。</li>
+      <li>观察框越小、背景越干净，追踪越稳定。</li>
+      <li>音叉振动很快，普通手机主要看到模糊变化，不等同于真实振幅。</li>
+      <li>所有数据在本机处理，不上传照片或声音。</li>
+    </ul>
+    <button id="closeIntro">进入工具</button>
+  </div>
+</div>
+
+<canvas id="workCanvas" width="256" height="144" class="hidden"></canvas>
+
+<script>
+(() => {
+  const video = document.getElementById('video');
+  const overlay = document.getElementById('overlay');
+  const octx = overlay.getContext('2d');
+  const workCanvas = document.getElementById('workCanvas');
+  const wctx = workCanvas.getContext('2d', { willReadFrequently: true });
+  const cameraBox = document.getElementById('cameraBox');
+  const modeSelect = document.getElementById('modeSelect');
+  const axisSelect = document.getElementById('axisSelect');
+  const roiSize = document.getElementById('roiSize');
+  const startBtn = document.getElementById('startBtn');
+  const calibrateBtn = document.getElementById('calibrateBtn');
+  const recordBtn = document.getElementById('recordBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const closeIntro = document.getElementById('closeIntro');
+  const introModal = document.getElementById('introModal');
+  const statusEl = document.getElementById('status');
+  const trackState = document.getElementById('trackState');
+  const recordState = document.getElementById('recordState');
+  const dbValue = document.getElementById('dbValue');
+  const ampValue = document.getElementById('ampValue');
+  const qualityValue = document.getElementById('qualityValue');
+  const qualityBar = document.getElementById('qualityBar');
+  const methodHint = document.getElementById('methodHint');
+  const bars = [...document.querySelectorAll('.bar')];
+  const recordList = document.getElementById('recordList');
+  const plot = document.getElementById('plot');
+  const pctx = plot.getContext('2d');
+
+  let stream, audioCtx, analyser, audioData;
+  let started = false;
+  let baseline = null;
+  let prevGray = null;
+  let realtimeDb = -100;
+  let realtimeLevel = 0;
+  let realtimeAmp = 0;
+  let quality = 0;
+  let tracking = null;
+  let recording = false;
+  let currentTrial = null;
+  let records = JSON.parse(localStorage.getItem('sound-vibration-records-v2') || '[]');
+  let roi = { cx: 0.50, cy: 0.50, size: 0.34 };
+  let dragging = false;
+
+  const modeText = {
+    ruler: '钢尺端点',
+    drum: '鼓面边缘/纸片',
+    fork: '音叉叉齿端部',
+    marker: '红色标记点'
+  };
+
+  function setStatus(text){ statusEl.textContent = text; }
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+  function nowText(){ return new Date().toLocaleString('zh-CN', { hour12:false }); }
+
+  closeIntro.addEventListener('click', () => introModal.classList.add('hidden'));
+
+  roiSize.addEventListener('input', () => {
+    roi.size = Number(roiSize.value) / 100;
+    baseline = null;
+    setStatus('观察框大小已调整。请重新把目标端点放入框内并校准静止位置。');
+  });
+  modeSelect.addEventListener('change', () => {
+    baseline = null; prevGray = null;
+    updateMethodHint();
+    setStatus('已切换观察对象。请把目标端点/边缘放入观察框，然后重新校准。');
+  });
+  axisSelect.addEventListener('change', () => { baseline = null; setStatus('主要振动方向已调整，请重新校准静止位置。'); });
+
+  function updateMethodHint(){
+    const m = modeSelect.value;
+    if (m === 'ruler') methodHint.textContent = '钢尺模式：优先记录观察框内端点边缘的上下位移。';
+    if (m === 'drum') methodHint.textContent = '鼓面模式：记录鼓面边缘/轻纸片的位移和画面运动变化。';
+    if (m === 'fork') methodHint.textContent = '音叉模式：记录叉齿端部的边缘晃动和运动模糊指数。';
+    if (m === 'marker') methodHint.textContent = '红点模式：追踪红色标记点相对静止位置的位移。';
+  }
+  updateMethodHint();
+
+  cameraBox.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    setRoiFromPointer(e);
+    cameraBox.setPointerCapture(e.pointerId);
+  });
+  cameraBox.addEventListener('pointermove', (e) => { if (dragging) setRoiFromPointer(e); });
+  cameraBox.addEventListener('pointerup', (e) => { dragging = false; try{cameraBox.releasePointerCapture(e.pointerId)}catch(_){} baseline = null; });
+
+  function setRoiFromPointer(e){
+    const rect = cameraBox.getBoundingClientRect();
+    roi.cx = clamp((e.clientX - rect.left) / rect.width, 0.12, 0.88);
+    roi.cy = clamp((e.clientY - rect.top) / rect.height, 0.12, 0.88);
+  }
+
+  startBtn.addEventListener('click', async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setStatus('当前浏览器不支持摄像头/麦克风调用。请使用 Safari、Chrome 或 Edge，并通过 HTTPS 打开网页。');
+        return;
+      }
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60, min: 30 } },
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      });
+      video.srcObject = stream;
+      await video.play();
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      await audioCtx.resume();
+      const source = audioCtx.createMediaStreamSource(stream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.30;
+      source.connect(analyser);
+      audioData = new Float32Array(analyser.fftSize);
+
+      started = true;
+      startBtn.disabled = true;
+      calibrateBtn.disabled = false;
+      recordBtn.disabled = false;
+      resizeOverlay();
+      setStatus('检测已开启。请将目标端点/边缘放入观察框，保持静止，点击“校准静止位置”。');
+      requestAnimationFrame(loop);
+    } catch (err) {
+      console.error(err);
+      setStatus('无法开启摄像头或麦克风：请检查浏览器权限；并确认页面是通过 HTTPS、localhost 或本地文件打开。');
+    }
+  });
+
+  calibrateBtn.addEventListener('click', () => {
+    if (tracking && tracking.valid) {
+      baseline = {
+        x: tracking.x,
+        y: tracking.y,
+        spreadX: tracking.spreadX,
+        spreadY: tracking.spreadY,
+        motion: tracking.motion,
+        blur: tracking.blur
+      };
+      setStatus('已校准静止位置。现在可以拨动/敲击/敲响物体，并点击“记录 3 秒”。');
+    } else {
+      baseline = null;
+      setStatus('画面追踪质量不足。请让端点/边缘充满观察框、使用纯色背景、增加光照，或贴小红点后切换到“通用：红色标记点追踪”。');
+    }
+  });
+
+  recordBtn.addEventListener('click', () => {
+    if (!started || recording) return;
+    if (!baseline && tracking && tracking.valid) {
+      baseline = { x:tracking.x, y:tracking.y, spreadX:tracking.spreadX, spreadY:tracking.spreadY, motion:tracking.motion, blur:tracking.blur };
+    }
+    recording = true;
+    currentTrial = {
+      start: Date.now(), end: Date.now() + 3000,
+      maxAmp: 0, maxDb: -100, maxLevel: 0, maxQuality: 0,
+      mode: modeText[modeSelect.value],
+      axis: axisSelect.options[axisSelect.selectedIndex].text,
+      method: methodName()
+    };
+    recordBtn.disabled = true;
+    recordState.textContent = '正在记录：3.0s';
+    setStatus('正在记录。请完成一次稳定实验，期间不要移动手机。');
+  });
+
+  exportBtn.addEventListener('click', () => {
+    if (!records.length) { setStatus('暂无记录可导出。'); return; }
+    const header = ['序号','时间','观察对象','方向设置','最大可见振动指数','最大相对音量dBFS','音量等级0-100','追踪质量%','算法'];
+    const rows = records.map((r,i)=>[i+1,r.time,r.mode,r.axis,r.maxAmp.toFixed(1),r.maxDb.toFixed(1),r.maxLevel.toFixed(0),r.maxQuality.toFixed(0),r.method]);
+    const csv = [header, ...rows].map(row => row.map(cell => '"' + String(cell).replaceAll('"','""') + '"').join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type:'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '声音与振动实验记录_V2.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    records = [];
+    localStorage.removeItem('sound-vibration-records-v2');
+    renderRecords();
+    setStatus('已清空本机实验记录。');
+  });
+
+  function methodName(){
+    const m = modeSelect.value;
+    if (m === 'ruler') return '观察框边缘位移：主用于钢尺端点';
+    if (m === 'drum') return '边缘位移 + 运动变化：主用于鼓面边缘/纸片';
+    if (m === 'fork') return '运动模糊 + 边缘晃动：主用于音叉叉齿';
+    return '红色标记点位移';
+  }
+
+  function resizeOverlay(){
+    const rect = video.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    overlay.width = Math.max(1, Math.round(rect.width * dpr));
+    overlay.height = Math.max(1, Math.round(rect.height * dpr));
+    overlay.style.width = rect.width + 'px';
+    overlay.style.height = rect.height + 'px';
+    octx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resizeOverlay);
+
+  function analyzeAudio(){
+    if (!analyser) return;
+    analyser.getFloatTimeDomainData(audioData);
+    let sum = 0;
+    for (let i=0;i<audioData.length;i++) sum += audioData[i] * audioData[i];
+    const rms = Math.sqrt(sum / audioData.length);
+    const db = rms > 0 ? 20 * Math.log10(rms) : -100;
+    realtimeDb = clamp(db, -100, 0);
+    realtimeLevel = clamp((realtimeDb + 60) / 55, 0, 1) * 100;
+    dbValue.textContent = realtimeDb.toFixed(1);
+    bars.forEach((bar, i) => {
+      const phase = 1 - Math.abs(i - (bars.length-1)/2) / ((bars.length-1)/2) * 0.18;
+      const wobble = 0.90 + 0.10 * Math.sin(performance.now()/80 + i*0.75);
+      const h = clamp(realtimeLevel * phase * wobble, 4, 100);
+      bar.style.height = h + '%';
+    });
+  }
+
+  function getRoiRect(W,H){
+    const rw = Math.round(W * roi.size);
+    const rh = Math.round(H * roi.size * 0.72);
+    let x0 = Math.round(W * roi.cx - rw/2);
+    let y0 = Math.round(H * roi.cy - rh/2);
+    x0 = clamp(x0, 1, W-rw-2);
+    y0 = clamp(y0, 1, H-rh-2);
+    return { x0, y0, rw, rh };
+  }
+
+  function analyzeVideo(){
+    if (video.readyState < 2) return;
+    const W = workCanvas.width, H = workCanvas.height;
+    wctx.drawImage(video, 0, 0, W, H);
+    const img = wctx.getImageData(0,0,W,H).data;
+    const gray = new Uint8Array(W*H);
+    for (let p=0, i=0; p<W*H; p++, i+=4) gray[p] = (img[i]*0.299 + img[i+1]*0.587 + img[i+2]*0.114) | 0;
+
+    const m = modeSelect.value;
+    if (m === 'marker') tracking = analyzeRedMarker(img, W, H, gray);
+    else tracking = analyzeEdges(gray, W, H, m);
+    prevGray = gray;
+
+    if (tracking && tracking.valid) {
+      const amp = computeAmp(tracking, m);
+      realtimeAmp = amp;
+      quality = tracking.quality;
+      trackState.textContent = `${modeText[m]}：追踪中`;
+    } else {
+      realtimeAmp = 0;
+      quality = tracking ? tracking.quality : 0;
+      trackState.textContent = `${modeText[m]}：未稳定检测`;
+    }
+    ampValue.textContent = realtimeAmp.toFixed(1);
+    qualityValue.textContent = quality.toFixed(0);
+    qualityBar.style.width = clamp(quality,0,100) + '%';
+  }
+
+  function analyzeRedMarker(img, W, H, gray){
+    const rct = getRoiRect(W,H);
+    let sx=0, sy=0, count=0, diffSum=0, diffCount=0;
+    for (let y=rct.y0; y<rct.y0+rct.rh; y++) {
+      for (let x=rct.x0; x<rct.x0+rct.rw; x++) {
+        const p = y*W+x, idx = p*4;
+        const r=img[idx], g=img[idx+1], b=img[idx+2];
+        if (prevGray) { diffSum += Math.abs(gray[p] - prevGray[p]); diffCount++; }
+        if (r > 130 && r > g * 1.35 && r > b * 1.35 && (r-g) > 35 && (r-b) > 35) { sx += x; sy += y; count++; }
+      }
+    }
+    const motion = diffCount ? (diffSum/diffCount) : 0;
+    const q = clamp(count / Math.max(1, rct.rw*rct.rh) * 7000, 0, 100);
+    return { valid: count > 8, x: count?sx/count:rct.x0+rct.rw/2, y: count?sy/count:rct.y0+rct.rh/2, spreadX:0, spreadY:0, motion, blur:0, quality:q, rect:rct };
+  }
+
+  function analyzeEdges(gray, W, H, mode){
+    const rct = getRoiRect(W,H);
+    let total = 0, sx = 0, sy = 0, sx2 = 0, sy2 = 0;
+    let diffSum = 0, diffCount = 0, contrastSum = 0, contrastCount = 0;
+    for (let y=rct.y0+1; y<rct.y0+rct.rh-1; y++) {
+      for (let x=rct.x0+1; x<rct.x0+rct.rw-1; x++) {
+        const p = y*W+x;
+        const gx = Math.abs(gray[p+1] - gray[p-1]);
+        const gy = Math.abs(gray[p+W] - gray[p-W]);
+        let edge = gx + gy;
+        if (mode === 'ruler') edge = gy * 1.55 + gx * 0.45;       // 侧拍钢尺更看重水平边缘的上下移动
+        if (mode === 'drum') edge = gy * 1.15 + gx * 0.85;        // 鼓面边缘与纸片两者兼顾
+        if (mode === 'fork') edge = gx * 1.25 + gy * 0.75;        // 叉齿端部常见为竖向边缘，兼顾模糊
+        const w = Math.max(0, edge - 8);
+        if (w > 0) { total += w; sx += x*w; sy += y*w; sx2 += x*x*w; sy2 += y*y*w; }
+        if (prevGray) { diffSum += Math.abs(gray[p] - prevGray[p]); diffCount++; }
+        contrastSum += edge; contrastCount++;
+      }
+    }
+    const cx = total ? sx/total : rct.x0+rct.rw/2;
+    const cy = total ? sy/total : rct.y0+rct.rh/2;
+    const spreadX = total ? Math.sqrt(Math.max(0, sx2/total - cx*cx)) : 0;
+    const spreadY = total ? Math.sqrt(Math.max(0, sy2/total - cy*cy)) : 0;
+    const motion = diffCount ? diffSum/diffCount : 0;
+    const contrast = contrastCount ? contrastSum/contrastCount : 0;
+    const blur = (spreadX + spreadY) / 2;
+    const density = total / Math.max(1, rct.rw*rct.rh);
+    let q = clamp((contrast - 10) * 2.2 + density * 0.12, 0, 100);
+    if (mode === 'fork') q = clamp(q + motion * 1.3, 0, 100);
+    const valid = q > 18 && total > 1000;
+    return { valid, x:cx, y:cy, spreadX, spreadY, motion, blur, quality:q, rect:rct };
+  }
+
+  function computeAmp(t, mode){
+    if (!t || !t.valid) return 0;
+    if (!baseline) {
+      if (mode === 'fork') return clamp(t.motion * 3.6, 0, 100);
+      return clamp(t.motion * 2.2, 0, 100);
+    }
+    const axis = axisSelect.value;
+    const dx = Math.abs(t.x - baseline.x);
+    const dy = Math.abs(t.y - baseline.y);
+    let pos = Math.sqrt(dx*dx + dy*dy);
+    if (axis === 'x') pos = dx;
+    if (axis === 'y') pos = dy;
+    if (axis === 'auto') {
+      if (mode === 'ruler') pos = Math.max(dy, dx * 0.65);
+      else if (mode === 'fork') pos = Math.max(dx, dy * 0.65);
+      else pos = Math.max(dx, dy);
+    }
+    const spreadChange = Math.abs(t.spreadX - baseline.spreadX) + Math.abs(t.spreadY - baseline.spreadY);
+    const motionPart = Math.max(0, t.motion - baseline.motion);
+    const blurPart = Math.max(0, t.blur - baseline.blur);
+    if (mode === 'ruler') return clamp(pos * 8.5 + motionPart * 1.2, 0, 100);
+    if (mode === 'drum') return clamp(pos * 7.0 + motionPart * 2.0 + spreadChange * 1.2, 0, 100);
+    if (mode === 'fork') return clamp(pos * 4.0 + motionPart * 4.2 + blurPart * 2.2, 0, 100);
+    return clamp(pos * 7.0, 0, 100);
+  }
+
+  function drawOverlay(){
+    const rect = video.getBoundingClientRect();
+    octx.clearRect(0,0,rect.width,rect.height);
+    const W = workCanvas.width, H = workCanvas.height;
+    const rct = getRoiRect(W,H);
+    const sx = rect.width / W, sy = rect.height / H;
+    const x = rct.x0*sx, y = rct.y0*sy, w = rct.rw*sx, h = rct.rh*sy;
+
+    octx.save();
+    octx.strokeStyle = quality >= 55 ? 'rgba(134,239,172,.95)' : quality >= 35 ? 'rgba(253,230,138,.95)' : 'rgba(252,165,165,.95)';
+    octx.lineWidth = 3;
+    octx.setLineDash([9,6]);
+    octx.strokeRect(x,y,w,h);
+    octx.setLineDash([]);
+    octx.fillStyle = 'rgba(0,0,0,.42)';
+    octx.fillRect(x,y-28,Math.min(w,240),26);
+    octx.fillStyle = '#fff';
+    octx.font = '13px -apple-system, BlinkMacSystemFont, sans-serif';
+    octx.fillText('观察框：拖动到端点/边缘', x+8, y-10);
+    octx.restore();
+
+    if (tracking && tracking.valid) {
+      const tx = tracking.x*sx, ty = tracking.y*sy;
+      octx.beginPath();
+      octx.arc(tx,ty,8,0,Math.PI*2);
+      octx.fillStyle = 'rgba(125,211,252,.95)';
+      octx.fill();
+      octx.strokeStyle = 'rgba(255,255,255,.92)';
+      octx.lineWidth = 2;
+      octx.stroke();
+      octx.beginPath();
+      octx.moveTo(x, ty); octx.lineTo(x+w, ty);
+      octx.moveTo(tx, y); octx.lineTo(tx, y+h);
+      octx.strokeStyle = 'rgba(125,211,252,.45)';
+      octx.lineWidth = 1.5;
+      octx.stroke();
+    }
+    if (baseline) {
+      const bx = baseline.x*sx, by = baseline.y*sy;
+      octx.beginPath();
+      octx.arc(bx,by,6,0,Math.PI*2);
+      octx.fillStyle = 'rgba(253,230,138,.95)';
+      octx.fill();
+      if (tracking && tracking.valid) {
+        const tx = tracking.x*sx, ty = tracking.y*sy;
+        octx.beginPath();
+        octx.moveTo(bx,by); octx.lineTo(tx,ty);
+        octx.strokeStyle = 'rgba(253,230,138,.9)';
+        octx.lineWidth = 2;
+        octx.stroke();
+      }
+    }
+  }
+
+  function loop(){
+    analyzeAudio();
+    analyzeVideo();
+    drawOverlay();
+    if (recording && currentTrial) {
+      currentTrial.maxAmp = Math.max(currentTrial.maxAmp, realtimeAmp);
+      currentTrial.maxDb = Math.max(currentTrial.maxDb, realtimeDb);
+      currentTrial.maxLevel = Math.max(currentTrial.maxLevel, realtimeLevel);
+      currentTrial.maxQuality = Math.max(currentTrial.maxQuality, quality);
+      const remain = Math.max(0, (currentTrial.end - Date.now()) / 1000);
+      recordState.textContent = '正在记录：' + remain.toFixed(1) + 's';
+      if (Date.now() >= currentTrial.end) finishTrial();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function finishTrial(){
+    recording = false;
+    recordBtn.disabled = false;
+    const shot = captureSnapshot(currentTrial);
+    records.unshift({
+      time: nowText(), mode: currentTrial.mode, axis: currentTrial.axis,
+      maxAmp: currentTrial.maxAmp, maxDb: currentTrial.maxDb, maxLevel: currentTrial.maxLevel,
+      maxQuality: currentTrial.maxQuality, method: currentTrial.method, image: shot
+    });
+    records = records.slice(0, 40);
+    localStorage.setItem('sound-vibration-records-v2', JSON.stringify(records));
+    renderRecords();
+    recordState.textContent = '已记录 1 次';
+    setStatus('本次记录完成。请改变拨动力度或敲击力度，再记录下一次；至少记录小/中/大三次后比较趋势。');
+    currentTrial = null;
+  }
+
+  function captureSnapshot(trial){
+    const c = document.createElement('canvas');
+    c.width = 520; c.height = 292;
+    const ctx = c.getContext('2d');
+    try { ctx.drawImage(video, 0, 0, c.width, c.height); } catch(e) { ctx.fillStyle='#000'; ctx.fillRect(0,0,c.width,c.height); }
+    ctx.fillStyle = 'rgba(0,0,0,.58)';
+    ctx.fillRect(0, c.height-88, c.width, 88);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 17px sans-serif';
+    ctx.fillText('声音与振动实验记录 V2', 14, c.height-60);
+    ctx.font = '13px sans-serif';
+    ctx.fillText(`${nowText()}  ${trial.mode}  最大振动指数 ${trial.maxAmp.toFixed(1)}`, 14, c.height-36);
+    ctx.fillText(`最大相对音量 ${trial.maxDb.toFixed(1)} dBFS  追踪质量 ${trial.maxQuality.toFixed(0)}%`, 14, c.height-16);
+    return c.toDataURL('image/jpeg', .80);
+  }
+
+  function renderRecords(){
+    if (!records.length) {
+      recordList.innerHTML = '<div class="empty">还没有记录。完成一次 3 秒记录后，会在这里生成数据卡片。</div>';
+      drawPlot(); return;
+    }
+    recordList.innerHTML = records.map((r,idx)=>`
+      <div class="rec">
+        <img src="${r.image}" alt="第${records.length-idx}次实验截图" />
+        <div class="recBody">
+          <b>第 ${records.length-idx} 次记录｜${r.mode}</b><br/>
+          时间：${r.time}<br/>
+          最大可见振动指数：${r.maxAmp.toFixed(1)} ｜ 最大相对音量：${r.maxDb.toFixed(1)} dBFS ｜ 音量等级：${r.maxLevel.toFixed(0)}<br/>
+          追踪质量：${r.maxQuality.toFixed(0)}% ｜ 方向：${r.axis}<br/>
+          算法：${r.method}
+        </div>
+      </div>`).join('');
+    drawPlot();
+  }
+
+  function drawPlot(){
+    const W = plot.width, H = plot.height;
+    pctx.clearRect(0,0,W,H);
+    pctx.fillStyle = '#0b0e14'; pctx.fillRect(0,0,W,H);
+    pctx.strokeStyle = 'rgba(255,255,255,.18)'; pctx.lineWidth = 2;
+    pctx.beginPath(); pctx.moveTo(70,H-52); pctx.lineTo(W-28,H-52); pctx.lineTo(W-38,H-58); pctx.moveTo(W-28,H-52); pctx.lineTo(W-38,H-46); pctx.stroke();
+    pctx.beginPath(); pctx.moveTo(70,H-52); pctx.lineTo(70,26); pctx.lineTo(64,38); pctx.moveTo(70,26); pctx.lineTo(76,38); pctx.stroke();
+    pctx.fillStyle = 'rgba(255,255,255,.76)'; pctx.font = '24px sans-serif'; pctx.fillText('振动指数越大，音量是否越大？', 80, 36);
+    pctx.font = '18px sans-serif'; pctx.fillText('最大可见振动指数', W-220, H-18); pctx.save(); pctx.translate(24,210); pctx.rotate(-Math.PI/2); pctx.fillText('最大音量等级', 0,0); pctx.restore();
+    pctx.font = '16px sans-serif'; pctx.fillStyle='rgba(255,255,255,.55)'; pctx.fillText('0', 52, H-28); pctx.fillText('100', 35, 40);
+    if (!records.length) return;
+    records.slice().reverse().forEach((r, i) => {
+      const x = 70 + clamp(r.maxAmp,0,100)/100 * (W-118);
+      const y = (H-52) - clamp(r.maxLevel,0,100)/100 * (H-90);
+      const grad = pctx.createLinearGradient(0,y-14,0,y+14);
+      grad.addColorStop(0,'#8b5cf6'); grad.addColorStop(.35,'#ff426d'); grad.addColorStop(.62,'#f4e04d'); grad.addColorStop(1,'#26d07c');
+      pctx.fillStyle = grad;
+      pctx.beginPath(); pctx.arc(x,y,13,0,Math.PI*2); pctx.fill();
+      pctx.fillStyle = '#fff'; pctx.font = 'bold 13px sans-serif'; pctx.fillText(String(i+1), x-4, y+5);
+    });
+  }
+
+  renderRecords();
+})();
+</script>
+</body>
+</html>
