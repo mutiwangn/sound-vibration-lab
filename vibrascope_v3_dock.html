@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>VibraScope V3</title>
+<style>
+:root{
+  --bg:#070b13; --panel:#151b27; --panel2:#202838; --line:#354052; --text:#f4f7fb; --muted:#aeb8c8;
+  --accent:#d9f3ff; --red:#ff3355; --green:#54e38e; --yellow:#ffd66b; --blue:#7aa7ff;
+  --safeTop: env(safe-area-inset-top); --safeBottom: env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent} html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif}
+.app{height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(180deg,#080c15,#0d1320)}
+.header{padding:calc(10px + var(--safeTop)) 14px 8px;border-bottom:1px solid #20293a;flex:0 0 auto;background:rgba(8,12,21,.92);backdrop-filter:blur(10px)}
+.title{font-size:20px;font-weight:900;letter-spacing:.2px}.sub{margin-top:4px;font-size:12px;color:var(--muted);line-height:1.35}.main{position:relative;flex:1;min-height:0;overflow:hidden}.page{position:absolute;inset:0;padding:10px 12px calc(82px + var(--safeBottom));display:none;overflow:hidden}.page.active{display:flex;flex-direction:column;gap:10px}.cameraBox{position:relative;flex:1;min-height:320px;border:1px solid #2b3444;border-radius:24px;overflow:hidden;background:#000;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+#video,#overlay{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}#overlay{z-index:3;touch-action:none}.hud{position:absolute;z-index:5;left:10px;right:10px;top:10px;display:flex;justify-content:space-between;gap:8px}.pill{padding:8px 10px;border-radius:999px;background:rgba(0,0,0,.48);border:1px solid rgba(255,255,255,.18);font-size:12px;color:#fff}.markerHint{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;color:rgba(255,255,255,.72);font-size:13px;line-height:1.5;text-shadow:0 2px 8px #000}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:0 0 auto}.metric{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px}.metric .label{font-size:12px;color:var(--muted);margin-bottom:5px}.metric .value{font-size:22px;font-weight:900}.meterWrap{height:42px;border-radius:14px;background:#0a0f18;border:1px solid #242d3d;overflow:hidden;position:relative}.rainbow{position:absolute;left:0;bottom:0;width:100%;height:10%;transition:height .08s linear;background:linear-gradient(0deg,#46e06f 0 18%,#c7ec55 18% 36%,#ffd44a 36% 54%,#ff944d 54% 72%,#ff406a 72% 100%)}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;flex:0 0 auto}.btn,select{border:1px solid #3a465c;background:#111827;color:#fff;border-radius:16px;min-height:48px;font-weight:800;font-size:14px;padding:0 10px}.btn.primary{background:#e6f7ff;color:#07111d}.btn.red{background:#ffcad1;color:#311}.btn:disabled{opacity:.42}.dock{position:absolute;z-index:20;left:12px;right:12px;bottom:calc(10px + var(--safeBottom));height:62px;background:rgba(18,24,34,.92);border:1px solid #384456;border-radius:24px;display:grid;grid-template-columns:repeat(4,1fr);padding:6px;backdrop-filter:blur(16px);box-shadow:0 12px 40px rgba(0,0,0,.35)}.dock button{border:0;background:transparent;color:var(--muted);border-radius:18px;font-weight:800;font-size:12px}.dock button.active{background:#e6f7ff;color:#07111d}.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:12px;overflow:hidden}.cardTitle{font-weight:900;margin-bottom:8px}.chart{width:100%;height:100%;min-height:180px;background:#080c13;border:1px solid #283244;border-radius:18px}.waveBox{flex:1;min-height:260px}.infoGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.small{font-size:12px;color:var(--muted);line-height:1.45}.row{display:flex;gap:8px;align-items:center}.recordList{overflow:auto;flex:1;display:flex;flex-direction:column;gap:8px;padding-bottom:4px}.record{background:#111827;border:1px solid #334055;border-radius:16px;padding:10px}.modal{position:fixed;inset:0;z-index:50;background:rgba(3,6,10,.86);display:flex;align-items:center;justify-content:center;padding:22px}.modalCard{width:min(520px,100%);background:#151b27;border:1px solid #3a465c;border-radius:28px;padding:20px;box-shadow:0 20px 80px rgba(0,0,0,.55)}.modalCard h1{font-size:24px;margin:0 0 8px}.modalCard p{color:var(--muted);line-height:1.55}.check{margin:10px 0;padding:12px;border-radius:16px;background:#0f1521;border:1px solid #303b4e}.toast{position:fixed;z-index:60;left:18px;right:18px;bottom:calc(86px + var(--safeBottom));background:#111827;border:1px solid #3a465c;border-radius:18px;padding:12px;color:#fff;display:none}.toast.show{display:block}.seg{display:flex;gap:6px;background:#0e1521;border:1px solid #2f3a4d;border-radius:18px;padding:5px}.seg button{flex:1;border:0;border-radius:13px;background:transparent;color:var(--muted);font-weight:800;padding:9px 4px}.seg button.active{background:#263247;color:#fff}.statusDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#788397;margin-right:6px}.statusDot.ok{background:var(--green)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header"><div class="title">VibraScope</div><div class="sub">把手机变成振动与声音传感器：标记点位移、时序切片波形、同步音量变化。</div></div>
+  <div class="main">
+    <section class="page active" id="p-camera">
+      <div class="cameraBox" id="cameraBox">
+        <video id="video" autoplay muted playsinline></video><canvas id="overlay"></canvas>
+        <div class="hud"><div class="pill"><span id="camDot" class="statusDot"></span><span id="camStatus">未授权</span></div><div class="pill" id="recStatus">未录制</div></div>
+        <div class="markerHint" id="markerHint">点击“启用摄像头和麦克风”后<br>拖动红点标记钢尺端点、鼓面纸片或音叉叉齿端部</div>
+      </div>
+      <div class="metrics"><div class="metric"><div class="label">实时振幅指数</div><div class="value"><span id="ampNow">--</span></div></div><div class="metric"><div class="label">实时相对音量</div><div class="value"><span id="dbNow">--</span> <span style="font-size:13px;color:var(--muted)">dBFS</span></div></div></div>
+      <div class="controls"><select id="objectType"><option value="ruler">钢尺端点</option><option value="drum">鼓面/纸片</option><option value="fork">音叉叉齿</option><option value="custom">自定义标记点</option></select><button class="btn primary" id="btnCalib">校准静止点</button><button class="btn red" id="btnRecord">录制 5 秒</button></div>
+    </section>
+
+    <section class="page" id="p-motion">
+      <div class="card waveBox"><div class="cardTitle">标记点位置变化</div><canvas class="chart" id="motionChart"></canvas><div class="small">红点代表每一帧中标记点的位置；线段越高，表示偏离静止点越大。</div></div>
+      <div class="card waveBox"><div class="cardTitle">纵向窄切片时序叠加</div><canvas class="chart" id="sliceChart"></canvas><div class="small">从标记点附近截取一条很窄的竖向画面，按时间从左到右叠加；适合竖直方向振动，可观察类似波形和振幅衰减。</div></div>
+    </section>
+
+    <section class="page" id="p-audio">
+      <div class="card" style="flex:0 0 auto"><div class="cardTitle">同步音量柱</div><div class="meterWrap"><div class="rainbow" id="rainbow"></div></div><div class="small" style="margin-top:8px">这里显示的是浏览器麦克风记录的相对音量，不是专业声级计分贝。</div></div>
+      <div class="card waveBox"><div class="cardTitle">分贝随时间变化</div><canvas class="chart" id="audioChart"></canvas><div class="small">录制时同步保存音量曲线，用于和振幅衰减曲线进行对照。</div></div>
+      <div class="infoGrid"><div class="metric"><div class="label">本次最大振幅</div><div class="value" id="maxAmp">--</div></div><div class="metric"><div class="label">本次最大音量</div><div class="value" id="maxDb">--</div></div></div>
+    </section>
+
+    <section class="page" id="p-records">
+      <div class="recordList" id="recordList"><div class="card"><div class="cardTitle">暂无记录</div><div class="small">完成一次录制后，这里会保存：对象、最大振幅、最大音量、振幅衰减趋势和音量变化。</div></div></div>
+      <div class="row"><button class="btn" id="btnExport" style="flex:1">导出 CSV</button><button class="btn red" id="btnClear" style="flex:1">清空</button></div>
+    </section>
+
+    <nav class="dock"><button class="active" data-page="camera">实验</button><button data-page="motion">振动</button><button data-page="audio">音量</button><button data-page="records">记录</button></nav>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modalCard">
+    <h1>启用实验传感器</h1>
+    <p>本工具需要同时调用摄像头和麦克风。摄像头用于追踪钢尺端点、鼓面纸片或音叉叉齿端部的标记点；麦克风用于同步记录相对音量变化。</p>
+    <div class="check">✓ 摄像头：观察红色标记点的位置变化</div>
+    <div class="check">✓ 麦克风：记录实时相对音量 dBFS</div>
+    <button class="btn primary" id="btnEnable" style="width:100%;height:56px;font-size:17px">启用摄像头和麦克风</button>
+    <p class="small">若没有弹出授权，请确认页面通过 HTTPS / GitHub Pages 打开，并在浏览器设置中允许相机与麦克风。</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const video=$('video'), overlay=$('overlay'), octx=overlay.getContext('2d');
+const motionCanvas=$('motionChart'), mctx=motionCanvas.getContext('2d');
+const sliceCanvas=$('sliceChart'), sctx=sliceCanvas.getContext('2d');
+const audioCanvas=$('audioChart'), actx2=audioCanvas.getContext('2d');
+let stream=null,audioCtx=null,analyser=null,audioData=null,marker={x:.5,y:.5},drag=false,calib=null,amp=0,db=-90,maxAmp=0,maxDb=-90;
+let running=false,recording=false,recordStart=0,records=[],track=[],audioTrack=[],frameCanvas=document.createElement('canvas'),fctx=frameCanvas.getContext('2d',{willReadFrequently:true});
+function toast(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600)}
+function resizeCanvas(c){const r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=Math.max(1,Math.floor(r.width*d));c.height=Math.max(1,Math.floor(r.height*d));return d}
+function setPage(name){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));$('p-'+name).classList.add('active');document.querySelectorAll('.dock button').forEach(b=>b.classList.toggle('active',b.dataset.page===name));setTimeout(drawAll,60)}
+document.querySelectorAll('.dock button').forEach(b=>b.onclick=()=>setPage(b.dataset.page));
+async function enable(){try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});video.srcObject=stream;audioCtx=new (window.AudioContext||window.webkitAudioContext)();const src=audioCtx.createMediaStreamSource(stream);analyser=audioCtx.createAnalyser();analyser.fftSize=1024;src.connect(analyser);audioData=new Uint8Array(analyser.fftSize);running=true;$('modal').style.display='none';$('camDot').classList.add('ok');$('camStatus').textContent='已授权';$('markerHint').textContent='拖动红点到钢尺端点、鼓面纸片或音叉叉齿端部';requestAnimationFrame(loop)}catch(e){toast('授权失败：请在浏览器中允许摄像头和麦克风，并使用 HTTPS 打开。')}}
+$('btnEnable').onclick=enable;
+function canvasPos(ev){const r=overlay.getBoundingClientRect();const t=ev.touches?ev.touches[0]:ev;return {x:(t.clientX-r.left)/r.width,y:(t.clientY-r.top)/r.height}}
+overlay.addEventListener('pointerdown',e=>{drag=true;marker=canvasPos(e);calib=null});overlay.addEventListener('pointermove',e=>{if(drag){marker=canvasPos(e);calib=null}});overlay.addEventListener('pointerup',()=>drag=false);overlay.addEventListener('pointercancel',()=>drag=false);
+$('btnCalib').onclick=()=>{calib={x:marker.x,y:marker.y};maxAmp=0;maxDb=-90;toast('已把当前红点位置设为静止点')}
+$('btnRecord').onclick=()=>startRecord();
+$('btnClear').onclick=()=>{records=[];renderRecords();drawAll()};$('btnExport').onclick=exportCSV;
+function startRecord(){if(!running){toast('请先启用摄像头和麦克风');return} if(!calib){calib={x:marker.x,y:marker.y}} recording=true;recordStart=performance.now();track=[];audioTrack=[];maxAmp=0;maxDb=-90;$('recStatus').textContent='录制中';setPage('camera');setTimeout(stopRecord,5000)}
+function stopRecord(){if(!recording)return;recording=false;$('recStatus').textContent='已保存';const rec={time:new Date().toLocaleTimeString(),object:$('objectType').selectedOptions[0].textContent,maxAmp:Math.round(maxAmp),maxDb:Math.round(maxDb),track:[...track],audio:[...audioTrack]};records.unshift(rec);renderRecords();toast('录制完成，已保存到“记录”');drawAll()}
+function audioStep(){if(!analyser)return;analyser.getByteTimeDomainData(audioData);let sum=0;for(let i=0;i<audioData.length;i++){let v=(audioData[i]-128)/128;sum+=v*v}let rms=Math.sqrt(sum/audioData.length);db=20*Math.log10(rms||0.00001);db=Math.max(-90,Math.min(0,db));$('dbNow').textContent=db.toFixed(0);$('rainbow').style.height=Math.max(3,(db+90)/90*100)+'%';if(recording){maxDb=Math.max(maxDb,db);audioTrack.push({t:performance.now()-recordStart,db})}$('maxDb').textContent=maxDb>-89?Math.round(maxDb):'--'}
+function detectMarker(){if(!video.videoWidth)return;const vw=video.videoWidth,vh=video.videoHeight;frameCanvas.width=vw;frameCanvas.height=vh;fctx.drawImage(video,0,0,vw,vh);const px=Math.floor(marker.x*vw),py=Math.floor(marker.y*vh),rad=50;const x0=Math.max(0,px-rad),y0=Math.max(0,py-rad),w=Math.min(vw-x0,rad*2),h=Math.min(vh-y0,rad*2);let img;try{img=fctx.getImageData(x0,y0,w,h).data}catch(e){return}let sx=0,sy=0,n=0,bx=0,by=0,bn=0;for(let y=0;y<h;y+=2){for(let x=0;x<w;x+=2){const i=(y*w+x)*4,r=img[i],g=img[i+1],b=img[i+2];const red=(r>120 && r>g*1.35 && r>b*1.35); if(red){sx+=x;sy+=y;n++} const bright=(r+g+b)/3; if(bright>150){bx+=x;by+=y;bn++}}}
+ if(n>3){marker.x=(x0+sx/n)/vw;marker.y=(y0+sy/n)/vh}else if(bn>20 && $('objectType').value!=='custom'){marker.x=(x0+bx/bn)/vw;marker.y=(y0+by/bn)/vh}
+ if(calib){const dx=(marker.x-calib.x)*100,dy=(marker.y-calib.y)*100;amp=Math.sqrt(dx*dx+dy*dy)*2.2}else{amp=0}$('ampNow').textContent=Math.round(amp);if(recording){maxAmp=Math.max(maxAmp,amp);track.push({t:performance.now()-recordStart,x:marker.x,y:marker.y,amp});addSliceColumn(vw,vh)}$('maxAmp').textContent=maxAmp?Math.round(maxAmp):'--'}
+function addSliceColumn(vw,vh){const sw=4,sh=Math.min(160,vh),sx=Math.max(0,Math.min(vw-sw,Math.floor(marker.x*vw)-sw/2)),sy=Math.max(0,Math.min(vh-sh,Math.floor(marker.y*vh)-sh/2)); if(sliceCanvas.width<10)resizeCanvas(sliceCanvas); const h=sliceCanvas.height,w=sliceCanvas.width; sctx.drawImage(sliceCanvas,1,0,w-1,h,0,0,w-1,h); sctx.drawImage(frameCanvas,sx,sy,sw,sh,w-2,0,2,h);}
+function loop(){audioStep();detectMarker();drawOverlay();if(recording&&performance.now()-recordStart>5100)stopRecord();requestAnimationFrame(loop)}
+function drawOverlay(){resizeCanvas(overlay);const w=overlay.width,h=overlay.height;octx.clearRect(0,0,w,h);const x=marker.x*w,y=marker.y*h;octx.strokeStyle='rgba(255,255,255,.85)';octx.lineWidth=2;octx.setLineDash([8,6]);octx.beginPath();octx.arc(x,y,58,0,Math.PI*2);octx.stroke();octx.setLineDash([]);if(calib){octx.strokeStyle='rgba(255,214,107,.9)';octx.beginPath();octx.moveTo(calib.x*w,calib.y*h);octx.lineTo(x,y);octx.stroke();octx.fillStyle='rgba(255,214,107,.95)';octx.beginPath();octx.arc(calib.x*w,calib.y*h,5,0,7);octx.fill()}octx.fillStyle='rgba(255,51,85,.95)';octx.beginPath();octx.arc(x,y,13,0,7);octx.fill();octx.strokeStyle='white';octx.lineWidth=3;octx.stroke();}
+function drawLineChart(ctx,c,data,key,min,max,label){resizeCanvas(c);const w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#080c13';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#344055';ctx.lineWidth=2;ctx.strokeRect(1,1,w-2,h-2);ctx.fillStyle='#aeb8c8';ctx.font=`${12*(devicePixelRatio||1)}px sans-serif`;ctx.fillText(label,14,22);if(data.length<2)return;const tmax=data[data.length-1].t||1;ctx.strokeStyle='#e9f7ff';ctx.lineWidth=2;ctx.beginPath();data.forEach((p,i)=>{const x=20+(p.t/tmax)*(w-40);const y=h-22-((p[key]-min)/(max-min))*(h-52);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
+function drawMotion(){drawLineChart(mctx,motionCanvas,track,'amp',0,100,'标记点偏离静止点的幅度指数');}
+function drawAudio(){drawLineChart(actx2,audioCanvas,audioTrack,'db',-90,0,'麦克风相对音量 dBFS');}
+function drawAll(){drawMotion();drawAudio()}
+function renderRecords(){const box=$('recordList');if(!records.length){box.innerHTML='<div class="card"><div class="cardTitle">暂无记录</div><div class="small">完成一次录制后，这里会保存实验数据。</div></div>';return}box.innerHTML=records.map((r,i)=>`<div class="record"><b>实验 ${records.length-i}｜${r.object}</b><div class="small">${r.time}</div><div style="margin-top:8px">最大振幅：<b>${r.maxAmp}</b>　最大音量：<b>${r.maxDb} dBFS</b></div></div>`).join('')}
+function exportCSV(){if(!records.length){toast('暂无记录');return}let rows=['time,object,maxAmp,maxDb'];records.forEach(r=>rows.push(`${r.time},${r.object},${r.maxAmp},${r.maxDb}`));const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vibrascope-records.csv';a.click();URL.revokeObjectURL(a.href)}
+window.addEventListener('resize',drawAll);
+</script>
+</body>
+</html>
